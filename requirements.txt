@@ -2,4 +2,6 @@ flask
 flask-cors
 gunicorn
 requests
+openai
 google-genai
+# force rebuild
