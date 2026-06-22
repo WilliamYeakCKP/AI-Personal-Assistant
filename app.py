@@ -32,9 +32,9 @@ def chat():
         result = response.json()
 
         try:
-    reply = result["candidates"][0]["content"]["parts"][0]["text"]
-except Exception:
-    reply = str(result)
+            reply = result["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception:
+            reply = str(result)
 
     except Exception as e:
         reply = f"Error: {str(e)}"
