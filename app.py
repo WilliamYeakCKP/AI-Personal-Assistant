@@ -16,7 +16,7 @@ def chat():
     user_message = data.get("message")
 
     try:
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-002:generateContent?key={API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key={API_KEY}"
 
         payload = {
             "contents": [
