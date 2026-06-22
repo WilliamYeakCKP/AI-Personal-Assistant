@@ -21,11 +21,13 @@ def chat():
         payload = {
             "contents": [
                 {
-                    "parts": [
-                        {"text": user_message}
-                    ]
+                    "parts": [{"text": user_message}]
                 }
-            ]
+            ],
+            "generationConfig": {
+                "temperature": 0.8,
+                "topP": 0.9
+            }
         }
 
         response = requests.post(url, json=payload)
