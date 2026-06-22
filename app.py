@@ -31,7 +31,7 @@ def chat():
         response = requests.post(url, json=payload)
         result = response.json()
 
-try:
+        try:
     reply = result["candidates"][0]["content"]["parts"][0]["text"]
 except Exception:
     reply = str(result)
