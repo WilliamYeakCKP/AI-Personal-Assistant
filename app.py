@@ -19,7 +19,7 @@ def chat():
 
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash-latest",
+            model="gemini-1.5-flash",
             contents=user_message
         )
 
@@ -29,3 +29,6 @@ def chat():
         reply = f"Error: {str(e)}"
 
     return jsonify({"reply": reply})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
