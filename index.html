@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Assistant</title>
+</head>
+<body>
+
+<h2>🤖 My AI Assistant</h2>
+
+<div id="chat" style="border:1px solid gray; height:300px; overflow:auto; padding:10px;"></div>
+
+<input id="msg" placeholder="Type message..." style="width:250px;">
+<button onclick="sendMessage()">Send</button>
+
+<script>
+async function sendMessage() {
+    let input = document.getElementById("msg");
+    let message = input.value;
+
+    if (!message) return;
+
+    let chat = document.getElementById("chat");
+
+    // 显示用户消息
+    chat.innerHTML += "<p><b>You:</b> " + message + "</p>";
+
+    input.value = "";
+
+    let res = await fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: message })
+    });
+
+    let data = await res.json();
+
+    // 显示AI回复
+    chat.innerHTML += "<p><b>AI:</b> " + data.reply + "</p>";
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ✅ 按 Enter 发送
+document.getElementById("msg").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+});
+</script>
+
+</body>
+</html>
