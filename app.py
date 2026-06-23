@@ -60,6 +60,11 @@ def chat():
                 result = response.json()
                 break
 
+        
+        # ✅ ✅ 👇 放在这里（重要！！！）
+        if not result:
+            return jsonify({"reply": "AI is currently busy, please try again shortly 😅"})
+
         # ✅ 安全解析（不会再炸）
         try:
             reply = result["candidates"][0]["content"]["parts"][0]["text"]
