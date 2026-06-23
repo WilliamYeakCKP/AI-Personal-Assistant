@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ✅ 改这里也可以当 trigger deploy（改一个字就会触发）
-APP_VERSION = "v1.0.1"
+APP_VERSION = "v1.0.2"
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
@@ -53,6 +53,11 @@ def chat():
             elif response.status_code == 503:
                 print(f"⚠️ Gemini busy, retrying... attempt {attempt + 1}")
                 time.sleep(3)  # 等3秒再试
+
+            elif response.status_code == 429:
+                return jsonify({
+                    "reply": "AI is busy (limit reached), try again later 🚦"
+                })
 
             else:
                 # ✅ 其他错误直接记录
