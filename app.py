@@ -3,37 +3,53 @@ from flask_cors import CORS
 import os
 import requests
 import time
-import random  # ✅ 新增
+import random
 
 app = Flask(__name__)
 CORS(app)
 
-APP_VERSION = "v1.0.3"  # ✅ 改版本触发 deploy
+APP_VERSION = "v1.1.0"
 
 API_KEY = os.environ.get("GEMINI_API_KEY")
+
+# ✅ ✅ ✅ 简单 chat history（server memory）
+chat_history = []
 
 
 @app.route("/")
 def home():
-    return f"✅ AI Assistant Backend is running! ({APP_VERSION})"
+    return f"✅ AI Assistant Backend running ({APP_VERSION})"
 
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
+    global chat_history
 
-    # ✅ 防止 None（更稳）
+    data = request.get_json()
     user_message = data.get("message", "Tell me something interesting")
+
+    # ✅ 把用户输入加入历史
+    chat_history.append({"role": "user", "text": user_message})
+
+    # ✅ 限制历史长度（避免太长）
+    if len(chat_history) > 6:
+        chat_history = chat_history[-6:]
+
+    # ✅ 把历史拼成 prompt
+    history_text = ""
+    for item in chat_history:
+        role = "User" if item["role"] == "user" else "AI"
+        history_text += f"{role}: {item['text']}\n"
+
+    # ✅ 加随机避免重复
+    history_text += f"Respond differently each time. #{random.randint(1,10000)}"
 
     url = f"https://generativelanguage.googleapis.com/v1/models/gemini-3.5-flash:generateContent?key={API_KEY}"
 
-    # ✅ ✅ ✅ 核心：加入随机 + prompt强化
     payload = {
         "contents": [
             {
-                "parts": [{
-                    "text": f"{user_message}. Give a different answer each time and avoid repeating. #{random.randint(1,10000)}"
-                }]
+                "parts": [{"text": history_text}]
             }
         ],
         "generationConfig": {
@@ -45,37 +61,47 @@ def chat():
     try:
         result = None
 
-        # ✅ retry（建议用3次）
+        # ✅ retry机制（最多3次）
         for attempt in range(3):
-            response = requests.post(url, json=payload, timeout=10)
+            try:
+                response = requests.post(url, json=payload, timeout=20)
+            except requests.exceptions.Timeout:
+                print(f"⏳ Timeout, retry {attempt + 1}")
+                time.sleep(2)
+                continue
 
             if response.status_code == 200:
                 result = response.json()
                 break
 
             elif response.status_code == 503:
-                print(f"⚠️ Gemini busy, retrying... attempt {attempt + 1}")
+                print(f"⚠️ Busy, retry {attempt + 1}")
                 time.sleep(2)
 
             elif response.status_code == 429:
                 return jsonify({
-                    "reply": "AI is busy (limit reached), try again later 🚦"
+                    "reply": "AI busy (limit reached), try again later 🚦"
                 })
 
             else:
-                print(f"❌ Error status: {response.status_code}")
+                print(f"❌ Error {response.status_code}")
                 result = response.json()
                 break
 
         # ✅ fallback
         if not result:
-            return jsonify({"reply": "AI is currently busy, please try again shortly 😅"})
+            return jsonify({
+                "reply": "AI temporarily unavailable, please try again 😅"
+            })
 
         # ✅ 安全解析
         try:
             reply = result["candidates"][0]["content"]["parts"][0]["text"]
         except Exception:
             reply = str(result)
+
+        # ✅ 保存 AI 回复到历史
+        chat_history.append({"role": "ai", "text": reply})
 
     except Exception as e:
         reply = f"Error: {str(e)}"
